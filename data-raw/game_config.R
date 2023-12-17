@@ -41,6 +41,8 @@ game_indices <- game_config |>
   select(game_id, index_main, index_reverse) |>
   unnest(cols = c(index_main, index_reverse)) |>
   drop_na()
+usethis::use_data(game_info, game_indices, overwrite = TRUE)
+
 game_preproc <- game_config |>
   select(game_id, prep_fun_name, input, extra) |>
   filter(!is.na(prep_fun_name)) |>
@@ -54,5 +56,10 @@ game_preproc <- game_config |>
     .keep = "unused",
     .after = 1
   )
-usethis::use_data(game_info, game_indices, overwrite = TRUE)
-usethis::use_data(game_preproc, internal = TRUE, overwrite = TRUE)
+game_data_names <- readr::read_csv(
+  "data-raw/game_data_names.csv",
+  col_types = readr::cols(game_id = "I")
+) |>
+  select(!game_name) |>
+  mutate(col_names = purrr::map(col_names, ~ eval(parse(text = .x))))
+usethis::use_data(game_preproc, game_data_names, internal = TRUE, overwrite = TRUE)
